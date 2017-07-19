@@ -87,7 +87,7 @@ public class Paging {
 		for (i = 0; i < numPhysicalPages; i++)
 			pageBuffer[i] = -1; // initialise contents
 		bufPointer = 0; // Buffer pointers is index into pageBuffer
-		
+
 		numPageFaults = numAdrViolations = numAccesses = 0;
 	}
 	
@@ -107,7 +107,30 @@ public class Paging {
 			bufPointer = 0;
 		return (removePageNum); // return number removed
 	}
-	
+
+	/*----------------------------------------------------------------------------------
+	 * Page buffering methods - for implementing LRU
+	 * ---------------------------------------------------------------------------------*/
+
+	public int leastRecentlyUsed() {
+		// Finds the index in the pageTabe for the frame that was least recently accessed
+		// by iterating through entire page table -- executed only upon init
+
+		int touchTime = pageTable[0].lastTouchTime;
+		int lruIndex = 0;
+
+		for (int i=1; i<pageBuffer.length; i++) {
+			int currTouch = pageTable[i].lastTouchTime;
+
+			if (currTouch < touchTime) {
+				touchTime = currTouch;
+				lruIndex = i;
+			}
+		}
+
+		return lruIndex;
+	}
+
 	/*----------------------------------------------------------------------------------
 	 * The following methods deal with the paging process
 	 * --------------------------------------------------------------------------------*/
@@ -219,13 +242,32 @@ public class Paging {
 	
 	// complete this method
 	// <----------------------------------------------------------------------------
+	// @param	replacePageNum	The page number that will be accessed, which is
+	// 							based on address passed.
 	public int replacePgLRU(int replacePageNum) {
+		System.out.println("Replace PG LRU");
+
+		// Frame that was least recently used (based on lastTouchTime)
+		int lruPage;
+		int lruFrame;
+
+		// Find the least recently used page and frame
+		lruPage = leastRecentlyUsed();
+		lruFrame = pageTable[lruPage].frame;
+
+		System.out.println("LRU PAGE: "+lruPage);
+		System.out.println("LRU FRAME: "+lruFrame);
+
 		return (replacePageNum);
 	}
 	
 	// complete this method
 	// <----------------------------------------------------------------------------
 	public int replacePgCLOCK(int replacePageNum) {
+
+		// TODO
+		System.out.println("Replace PG CLOCK");
+
 		return (replacePageNum);
 	}
 	
