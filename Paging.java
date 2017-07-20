@@ -43,6 +43,8 @@ public class Paging {
 	private int numPageFaults; // Number of page faults incurred
 	private int numAdrViolations; // number of address violations incurred
 	private int numAccesses; // number of memory accesses
+
+	private int[] useBitBuffer; // stores use bit for each frame - for clock algorithm
 	
 	/*
 	 * The following constructor gets a lot of data from the kernel that creates
@@ -84,8 +86,11 @@ public class Paging {
 		// Setup the page buffer
 		pageBuffer = new int[numPhysicalPages]; // for listing used virtual
 		// pages
-		for (i = 0; i < numPhysicalPages; i++)
+		for (i = 0; i < numPhysicalPages; i++) {
 			pageBuffer[i] = -1; // initialise contents
+			useBitBuffer[i] = 1; // initialise use bits for all to 1
+		}
+
 		bufPointer = 0; // Buffer pointers is index into pageBuffer
 
 		numPageFaults = numAdrViolations = numAccesses = 0;
@@ -142,6 +147,16 @@ public class Paging {
 		pageBuffer[bufPointer] = virtualPageNum; // replace it
 
 		return (removePageNum); // return number removed
+	}
+
+	/*----------------------------------------------------------------------------------
+	 * Page buffering methods - for implementing CLOCK
+	 * ---------------------------------------------------------------------------------*/
+
+	public int addPageBufCLOCK(int virtualPageNum) {
+		int removePageNum;
+
+		return (0); // return number removed
 	}
 
 	/*----------------------------------------------------------------------------------
@@ -293,9 +308,31 @@ public class Paging {
 	// @param	replacePageNum	The page number that will be accessed, which is
 	// 							based on the address passed.
 	public int replacePgCLOCK(int replacePageNum) {
+		int oldPageNum;
+		int freedFrame;
 
-		// TODO
-		System.out.println("Replace PG CLOCK");
+		// Find the least recently used page and frame
+		oldPageNum = addPageBufCLOCK(replacePageNum);
+		freedFrame = pageTable[oldPageNum].frame;
+
+		// clear the page table entry
+		// normally the M bit is checked to see if the
+		// physical frame has been changed since loaded
+		// If so (M=1), then the contents must be saved to the
+		// swap to update the virtual page there with the changes
+		// we do not need to do that in this simulation
+		updatePageTableEntry(oldPageNum, -1, (byte) 0, (byte) 0, (byte) 0,
+				(byte) 0, 0, 0);
+		controlPanel.removePhysicalPage(oldPageNum);
+
+		// Assign the Free frame to the requesting page
+		// add link to frame
+		updatePageTableEntry(replacePageNum, freedFrame, (byte) 1, (byte) 0,
+				(byte) 0, (byte) 0, kernel.clock, 0);
+		controlPanel.addPhysicalPage(replacePageNum, freedFrame);
+
+		// logging and leave
+		logReplacement(oldPageNum, replacePageNum, freedFrame);
 
 		return (replacePageNum);
 	}
