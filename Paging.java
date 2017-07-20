@@ -6,8 +6,8 @@
  */
 
 /*
- * Student Name:
- * Student Number: 
+ * Student Name: Michelle Solanges Foy
+ * Student Number: 6677848
  */
 
 /**
@@ -108,27 +108,40 @@ public class Paging {
 		return (removePageNum); // return number removed
 	}
 
+	public void printPageBuffer() {
+		for (int i=0; i<pageBuffer.length; i++) {
+			System.out.println("Frame with index ["+i+"] contains virtual page: "+pageBuffer[i]);
+		}
+	}
+
 	/*----------------------------------------------------------------------------------
 	 * Page buffering methods - for implementing LRU
 	 * ---------------------------------------------------------------------------------*/
 
 	public int leastRecentlyUsed() {
-		// Finds the index in the pageTabe for the frame that was least recently accessed
-		// by iterating through entire page table -- executed only upon init
-
-		int touchTime = pageTable[0].lastTouchTime;
-		int lruIndex = 0;
+		// Finds the page in the pageTable that was least recently accessed
+		// by checking the last touch time for each page in the pageTable
+		int lruTime = pageTable[pageBuffer[0]].lastTouchTime;
+		bufPointer = 0;
 
 		for (int i=1; i<pageBuffer.length; i++) {
-			int currTouch = pageTable[i].lastTouchTime;
+			int vPage = pageBuffer[i];
+			int currTouch = pageTable[vPage].lastTouchTime;
 
-			if (currTouch < touchTime) {
-				touchTime = currTouch;
-				lruIndex = i;
+
+			if (currTouch < lruTime) {
+				bufPointer = i;
 			}
 		}
 
-		return lruIndex;
+		return (pageBuffer[bufPointer]);
+	}
+
+	public int addPageBufLRU(int virtualPageNum) {
+		int removePageNum = leastRecentlyUsed(); // get value at pointer
+		pageBuffer[bufPointer] = virtualPageNum; // replace it
+
+		return (removePageNum); // return number removed
 	}
 
 	/*----------------------------------------------------------------------------------
@@ -213,12 +226,12 @@ public class Paging {
 	public int replacePgFIFO(int replacePageNum) {
 		int oldPageNum;
 		int freedFrame;
-		
+
 		// Free the frame from page at the head of the queue
 		oldPageNum = addPageBuf(replacePageNum); // replaces virtual page number
 		// at head of FIFO
 		freedFrame = pageTable[oldPageNum].frame; // get frame number
-		
+
 		// clear the page table entry
 		// normally the M bit is checked to see if the
 		// physical frame has been changed since loaded
@@ -245,18 +258,32 @@ public class Paging {
 	// @param	replacePageNum	The page number that will be accessed, which is
 	// 							based on address passed.
 	public int replacePgLRU(int replacePageNum) {
-		System.out.println("Replace PG LRU");
-
-		// Frame that was least recently used (based on lastTouchTime)
-		int lruPage;
-		int lruFrame;
+		// Page that was least recently used (based on lastTouchTime)
+		int oldPageNum;
+		int freedFrame;
 
 		// Find the least recently used page and frame
-		lruPage = leastRecentlyUsed();
-		lruFrame = pageTable[lruPage].frame;
+		oldPageNum = addPageBufLRU(replacePageNum);
+		freedFrame = pageTable[oldPageNum].frame;
 
-		System.out.println("LRU PAGE: "+lruPage);
-		System.out.println("LRU FRAME: "+lruFrame);
+		// clear the page table entry
+		// normally the M bit is checked to see if the
+		// physical frame has been changed since loaded
+		// If so (M=1), then the contents must be saved to the
+		// swap to update the virtual page there with the changes
+		// we do not need to do that in this sumulation
+		updatePageTableEntry(oldPageNum, -1, (byte) 0, (byte) 0, (byte) 0,
+				(byte) 0, 0, 0);
+		controlPanel.removePhysicalPage(oldPageNum);
+
+		// Assign the Free frame to the requesting page
+		// add link to frame
+		updatePageTableEntry(replacePageNum, freedFrame, (byte) 1, (byte) 0,
+				(byte) 0, (byte) 0, kernel.clock, 0);
+		controlPanel.addPhysicalPage(replacePageNum, freedFrame);
+
+		// logging and leave
+		logReplacement(oldPageNum, replacePageNum, freedFrame);
 
 		return (replacePageNum);
 	}
