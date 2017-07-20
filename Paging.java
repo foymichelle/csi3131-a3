@@ -85,6 +85,7 @@ public class Paging {
 		}
 		// Setup the page buffer
 		pageBuffer = new int[numPhysicalPages]; // for listing used virtual
+        useBitBuffer = new int[numPhysicalPages];
 		// pages
 		for (i = 0; i < numPhysicalPages; i++) {
 			pageBuffer[i] = -1; // initialise contents
@@ -154,9 +155,27 @@ public class Paging {
 	 * ---------------------------------------------------------------------------------*/
 
 	public int addPageBufCLOCK(int virtualPageNum) {
-		int removePageNum;
+		int removePageNum = -1;
+		boolean found = false;
 
-		return (0); // return number removed
+		// loop through useBitBuffer to find first 0, replacing observed bits from 1 to 0
+        // and changing found 0 bit to 1
+        while (!found) {
+            if (useBitBuffer[bufPointer] == 0) {
+                useBitBuffer[bufPointer] = 1;
+                removePageNum = pageBuffer[bufPointer];
+                pageBuffer[bufPointer] = virtualPageNum; // replace
+                found = true;
+            } else {
+                useBitBuffer[bufPointer] = 0;
+            }
+            bufPointer++;
+            if (bufPointer == numPhysicalPages) { // cycle to start if at end
+                bufPointer = 0;
+            }
+        }
+
+		return (removePageNum); // return number removed
 	}
 
 	/*----------------------------------------------------------------------------------
