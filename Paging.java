@@ -256,7 +256,7 @@ public class Paging {
 	// complete this method
 	// <----------------------------------------------------------------------------
 	// @param	replacePageNum	The page number that will be accessed, which is
-	// 							based on address passed.
+	// 							based on the address passed.
 	public int replacePgLRU(int replacePageNum) {
 		// Page that was least recently used (based on lastTouchTime)
 		int oldPageNum;
@@ -271,7 +271,7 @@ public class Paging {
 		// physical frame has been changed since loaded
 		// If so (M=1), then the contents must be saved to the
 		// swap to update the virtual page there with the changes
-		// we do not need to do that in this sumulation
+		// we do not need to do that in this simulation
 		updatePageTableEntry(oldPageNum, -1, (byte) 0, (byte) 0, (byte) 0,
 				(byte) 0, 0, 0);
 		controlPanel.removePhysicalPage(oldPageNum);
@@ -290,6 +290,8 @@ public class Paging {
 	
 	// complete this method
 	// <----------------------------------------------------------------------------
+	// @param	replacePageNum	The page number that will be accessed, which is
+	// 							based on the address passed.
 	public int replacePgCLOCK(int replacePageNum) {
 
 		// TODO
