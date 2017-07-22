@@ -114,12 +114,6 @@ public class Paging {
 		return (removePageNum); // return number removed
 	}
 
-	public void printPageBuffer() {
-		for (int i=0; i<pageBuffer.length; i++) {
-			System.out.println("Frame with index ["+i+"] contains virtual page: "+pageBuffer[i]);
-		}
-	}
-
 	/*----------------------------------------------------------------------------------
 	 * Page buffering methods - for implementing LRU
 	 * ---------------------------------------------------------------------------------*/
@@ -162,13 +156,14 @@ public class Paging {
         // and changing found 0 bit to 1
         while (!found) {
             if (useBitBuffer[bufPointer] == 0) {
-                useBitBuffer[bufPointer] = 1;
+                useBitBuffer[bufPointer] = 1; // set to 1 as it will be used
                 removePageNum = pageBuffer[bufPointer];
                 pageBuffer[bufPointer] = virtualPageNum; // replace
                 found = true;
             } else {
-                useBitBuffer[bufPointer] = 0;
+                useBitBuffer[bufPointer] = 0; // set to 0 as we observed this page
             }
+
             bufPointer++;
             if (bufPointer == numPhysicalPages) { // cycle to start if at end
                 bufPointer = 0;
@@ -209,10 +204,19 @@ public class Paging {
 	// mem
 	{
 		int pageNum; // virtual page number
-		
+		int pageIndex = -1; // index of pageNum in pageBuffer
+
 		numAccesses++;
 		pageNum = virtualPageNum(memAddr); // obtain the page number from the
 		// address
+
+        for (int i=0; i<pageBuffer.length; i++) {
+            if (pageBuffer[i] == pageNum) {
+                pageIndex = i;
+                break;
+            }
+        }
+
 		if (pageNum == -1) // virtualPageNum returns -1 if address is invalid
 		{
 			numAdrViolations++;
@@ -234,8 +238,13 @@ public class Paging {
 			controlPanel.pageFaultValueLabel.setText("YES");
 		} else // no page fault
 		{
+            if (useBitBuffer[pageIndex] == 0) {
+                useBitBuffer[pageIndex] = 1;
+            }
+
 			controlPanel.pageFaultValueLabel.setText("NO");
 		}
+
 		return (pageNum);
 	}
 	
